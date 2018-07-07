@@ -1,4 +1,4 @@
-1.Outline
+.Outline
 This project is to analyze three types of data:
     (1). Statistics Mesh Data for business activity
     (2). Statistics Mesh Data for Nationals

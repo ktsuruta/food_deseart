@@ -1,2 +1,4 @@
 pyvenv/**
+*.swp
+data/+.swp
 
