@@ -1,7 +1,6 @@
 import codecs,glob, os
 import pandas as pd
-
-import conf as CONF
+import libs.conf as CONF
 
 def import_commercial_census_file():
 
@@ -58,7 +57,7 @@ def import_files_to_df(dir, encoding='utf8', skiprows=[], index=None, dtype={}):
             with codecs.open(file, "r", "SHIFT-JIS", "ignore") as file:
                 tmp_df = pd.read_table(file, delimiter=",")
                 df_list.append(tmp_df)
-    df = pd.concat(df_list)
+    df = pd.concat(df_list, sort=True)
     if index:
         df.set_index(index, inplace=True)
     return df
@@ -71,14 +70,3 @@ def import_the_metrics_of_cities_and_prefs():
 
 def merge_mesh_code_and_the_metrics_of_pref(pref_meshcode, metrics_of_cities_and_prefs):
     return prpref_meshcode.merge(metrics_of_cities_and_prefs , on='都道府県市区町村コード')
-
-
-print(import_files_to_df(CONF.DIR_NATIONAL_CENSUS, encoding="SHIFT-JIS", skiprows=[1], index='KEY_CODE'))
-pref_meshcode = import_files_to_df(CONF.DIR_PREF_MESHCODE, encoding='SHIFT-JIS', skiprows=[1], \
-                dtype={"都道府県市区町村コード":str})
-metrics_of_cities_and_prefs = import_the_metrics_of_cities_and_prefs()
-
-print(pref_meshcode)
-print(metrics_of_cities_and_prefs)
-
-print(pref_meshcode.merge(metrics_of_cities_and_prefs , on='都道府県市区町村コード'))

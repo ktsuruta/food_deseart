@@ -4,7 +4,7 @@ import unittest
 import sys, os
 sys.path.insert(0, os.getcwd())
 import libs.preprocess as preprocess
-import conf as CONF
+import libs.conf as CONF
 
 class TestImportData(unittest.TestCase):
     '''
@@ -12,23 +12,22 @@ class TestImportData(unittest.TestCase):
     '''
 
     def setUp(self):
-       self.national_census_df = preprocess.national_census_df
-        self.mesh_df = preprocess.mesh_df
-
+        pass
     def test_load_national_survey(self):
         # At first, we import the records of national survey.
-        self.assertEquals(type(self.national_survey_df), pd.DataFrame)
         # Then, we found that the first and second row are the header information.
         # We need to set the first row as header information and skip the second row.
+        preprocess.import_files_to_df(CONF.DIR_NATIONAL_CENSUS, encoding="SHIFT-JIS", skiprows=[1],index="KEY_CODE")
 
     def test_check_if_a_mesh_is_food_hazard(self):
-        self.assertEqual(preprocess.check_if_it_is_a_food_desert('684201122', self.mesh_df), False)
-        self.assertEqual(preprocess.check_if_it_is_a_food_desert('684201212', self.mesh_df), True)        
+        mesh_df = preprocess.import_commercial_census_file()
+        self.assertEqual(preprocess.check_if_it_is_a_food_desert('684201122', mesh_df), False)
+        self.assertEqual(preprocess.check_if_it_is_a_food_desert('684201212', mesh_df), True)        
 
     def test_senario(self):
         # Import all the national survey files to a dataframe. The files are stored in a specific directory.
         # https://www.e-stat.go.jp/gis/statmap-search?page=1&type=1&toukeiCode=00200521
-        national_census = import_files_to_df(CONF.DIR_NATIONAL_CENSUS, encoding="SHIFT-JIS", skiprows=[1], index='KEY_CODE')
+        national_census = preprocess.import_files_to_df(CONF.DIR_NATIONAL_CENSUS, encoding="SHIFT-JIS", skiprows=[1], index='KEY_CODE')
         # Import the commercial statistics file to a dataframe.
         # To compare the number of records of the above dataframes.
         commercial_census = preprocess.import_commercial_census_file()
@@ -38,10 +37,11 @@ class TestImportData(unittest.TestCase):
         # http://www.stat.go.jp/data/mesh/m_itiran.html
 
         # To import the data of Mesh Code by city.
-        pref_mesh_code = import_files_to_df(CONF.DIR_PREF_MESHCODE, encoding='SHIFT-JIS', skiprows=[1])
-
+        pref_mesh_code = preprocess.import_files_to_df(CONF.DIR_PREF_MESHCODE, encoding='SHIFT-JIS', skiprows=[1])
+        the_metrics_of_cities_and_prefs = preprocess.import_the_metrics_of_cities_and_prefs()
+        pref_mesh_code = preprocess.merge_mesh_code_and_the_metrics_of_pref(pref_mesh_code, the_metrics_of_cities_and_prefs)
         # To import the data of metrics of cites and prefs.
-        
+               
 
         # To add the columns of estimated number of population who are not able to drive.
         # We use the data of the study below.
