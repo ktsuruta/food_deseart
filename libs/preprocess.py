@@ -1,18 +1,7 @@
+import codecs,glob, os
 import pandas as pd
-import glob, os
 
-import conf as CONF 
-
-# To import table data of National Servey, skipping the second row because it overlaps the first row.
-# https://www.e-stat.go.jp/gis/statmap-search?page=1&type=1&toukeiCode=00200521
-current_dir = os.getcwd()
-print(current_dir)
-national_census_df = pd.read_csv('{0}tblT000847H3622.txt'.format(CONF.DIR_NATIONAL_CENSUS), skiprows=[1])
-national_census_df.set_index('KEY_CODE', inplace=True)
-print(national_census_df)
-print(national_census_df.index.values)
-
-#national_census_df['T000847001','T000847040','T000847041']
+import conf as CONF
 
 def import_commercial_census_file():
 
@@ -33,7 +22,8 @@ def import_commercial_census_file():
     supermarket_grocery_df = commercial_census_df['70']
     convenience_store_df = commercial_census_df['73']
     
-    mesh_df = pd.concat([mesh_df, department_store_df, supermarket_df, supermarket_grocery_df, convenience_store_df], axis=1)
+    mesh_df = pd.concat([mesh_df, department_store_df, supermarket_df, supermarket_grocery_df, \
+              convenience_store_df], axis=1)
     mesh_df.columns = ['KEY_CODE', 'department', 'supermarket', 'supermarket_grocery', 'convenience']
     mesh_df.set_index('KEY_CODE', inplace=True)
     return mesh_df
@@ -42,22 +32,13 @@ def check_if_it_is_a_food_desert(KEY_CODE, df):
     '''
     This method to check if the mesh of KEY_CODE has any store in the mesh and the neibough meshes.
     '''
-    if df.loc[KEY_CODE, 'department'] == '-' and df.loc[KEY_CODE, 'supermarket'] == '-' and df.loc[KEY_CODE, 'supermarket_grocery'] == '-' and df.loc[KEY_CODE, 'convenience'] == '-':
+    if df.loc[KEY_CODE, 'department'] == '-' and df.loc[KEY_CODE, 'supermarket'] == '-' and \
+       df.loc[KEY_CODE, 'supermarket_grocery'] == '-' and df.loc[KEY_CODE, 'convenience'] == '-':
         return True
     else:
         return False
 
-def import_national_census_files():
-    files = glob.glob(os.path.join(CONF.DIR_NATIONAL_CENSUS, '*.txt'))
-    df_list = []
-    for file in files:
-        tmp_df = pd.read_csv(file,  encoding="SHIFT-JIS", skiprows=[1] )
-        df_list.append(tmp_df)
-    df = pd.concat(df_list)
-    df.set_index('KEY_CODE', inplace=True)
-    return df
-
-def import_files_to_df(dir, encoding='utf8', skiprows=[], index=None):
+def import_files_to_df(dir, encoding='utf8', skiprows=[], index=None, dtype={}):
     '''
     params: 
         dir(str): Directory of the files to import.
@@ -70,23 +51,34 @@ def import_files_to_df(dir, encoding='utf8', skiprows=[], index=None):
     files = glob.glob(os.path.join(dir, '*'))
     df_list = []
     for file in files:
-        print(file)
-        tmp_df = pd.read_csv(file,  encoding=encoding, skiprows=skiprows)
-        df_list.append(tmp_df)
+        try:
+            tmp_df = pd.read_csv(file,  encoding=encoding, skiprows=skiprows, dtype=dtype)
+            df_list.append(tmp_df)
+        except:
+            with codecs.open(file, "r", "SHIFT-JIS", "ignore") as file:
+                tmp_df = pd.read_table(file, delimiter=",")
+                df_list.append(tmp_df)
     df = pd.concat(df_list)
     if index:
         df.set_index(index, inplace=True)
     return df
 
-print(import_national_census_files())
-print(import_commercial_census_file())
-mesh_df = import_commercial_census_file()
-print(check_if_it_is_a_food_desert('684115032', mesh_df))
-print(check_if_it_is_a_food_desert('684117501', mesh_df))
+def import_the_metrics_of_cities_and_prefs():
+    df = pd.read_csv('{0}FEA_hyoujun-20180707233259.csv'.format(CONF.DIR_METRICS_OF_CITIES_AND_PREFS), \
+         skiprows=[1], encoding="SHIFT-JIS", dtype={'標準地域コード':str})
+    df.rename(inplace=True, columns={"標準地域コード":"都道府県市区町村コード"})
+    return df
 
+def merge_mesh_code_and_the_metrics_of_pref(pref_meshcode, metrics_of_cities_and_prefs):
+    return prpref_meshcode.merge(metrics_of_cities_and_prefs , on='都道府県市区町村コード')
 
-tmp = pd.read_csv('data/pref_meshcode/27.csv', encoding='SHIFT-JIS', skiprows=None)
-tmp = pd.read_csv('data/pref_meshcode/28.csv', encoding='SHIFT-JIS', skiprows=None)
 
 print(import_files_to_df(CONF.DIR_NATIONAL_CENSUS, encoding="SHIFT-JIS", skiprows=[1], index='KEY_CODE'))
-print(import_files_to_df(CONF.DIR_PREF_MESHCODE, encoding='SHIFT-JIS', skiprows=[1]))
+pref_meshcode = import_files_to_df(CONF.DIR_PREF_MESHCODE, encoding='SHIFT-JIS', skiprows=[1], \
+                dtype={"都道府県市区町村コード":str})
+metrics_of_cities_and_prefs = import_the_metrics_of_cities_and_prefs()
+
+print(pref_meshcode)
+print(metrics_of_cities_and_prefs)
+
+print(pref_meshcode.merge(metrics_of_cities_and_prefs , on='都道府県市区町村コード'))

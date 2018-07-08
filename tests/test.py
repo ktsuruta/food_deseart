@@ -4,6 +4,7 @@ import unittest
 import sys, os
 sys.path.insert(0, os.getcwd())
 import libs.preprocess as preprocess
+import conf as CONF
 
 class TestImportData(unittest.TestCase):
     '''
@@ -27,8 +28,7 @@ class TestImportData(unittest.TestCase):
     def test_senario(self):
         # Import all the national survey files to a dataframe. The files are stored in a specific directory.
         # https://www.e-stat.go.jp/gis/statmap-search?page=1&type=1&toukeiCode=00200521
-        national_census = preprocess.import_national_census_files() 
-
+        national_census = import_files_to_df(CONF.DIR_NATIONAL_CENSUS, encoding="SHIFT-JIS", skiprows=[1], index='KEY_CODE')
         # Import the commercial statistics file to a dataframe.
         # To compare the number of records of the above dataframes.
         commercial_census = preprocess.import_commercial_census_file()
@@ -36,6 +36,12 @@ class TestImportData(unittest.TestCase):
         # To add the column of prefecture to "national_census_df". 
         # We use the data of Mesh Code List by city, town, and area.
         # http://www.stat.go.jp/data/mesh/m_itiran.html
+
+        # To import the data of Mesh Code by city.
+        pref_mesh_code = import_files_to_df(CONF.DIR_PREF_MESHCODE, encoding='SHIFT-JIS', skiprows=[1])
+
+        # To import the data of metrics of cites and prefs.
+        
 
         # To add the columns of estimated number of population who are not able to drive.
         # We use the data of the study below.
